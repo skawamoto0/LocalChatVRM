@@ -33,3 +33,5 @@ npm run dev
 実行後、以下のURLにアクセスして動作を確認して下さい。
 
 [http://localhost:3000](http://localhost:3000)
+
+マイクボタンを押すと会話が開始します。
