@@ -78,6 +78,17 @@ export class Model {
     });
   }
 
+  /**
+   * 音声を再生し、リップシンクを行う
+   */
+  public async speakWithoutEmotion(buffer: ArrayBuffer) {
+    await new Promise((resolve) => {
+      this._lipSync?.playFromArrayBuffer(buffer, () => {
+        resolve(true);
+      });
+    });
+  }
+
   public update(delta: number): void {
     if (this._lipSync) {
       const { volume } = this._lipSync.update();
