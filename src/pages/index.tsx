@@ -24,6 +24,7 @@ export default function Home() {
   const [isMicRecording, setIsMicRecording] = useState(false);
   const speechToSpeechRef = useRef<ISpeechToSpeech | null>(null);
   const [userMessage, setUserMessage] = useState("");
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
     if (window.localStorage.getItem("chatVRMParams")) {
@@ -32,6 +33,7 @@ export default function Home() {
       );
       setSystemPrompt(params.systemPrompt ?? SYSTEM_PROMPT);
       setChatLog(params.chatLog ?? []);
+      setIsReady(false);
     }
   }, []);
 
@@ -59,6 +61,7 @@ export default function Home() {
     async (audioData: Blob) => {
       const arrayBuffer = await audioData.arrayBuffer();
       viewer.model?.speakWithoutEmotion(arrayBuffer);
+      setIsReady(false);
     },
     [viewer]
   );
@@ -68,13 +71,16 @@ export default function Home() {
     speechToSpeechRef.current = speechToSpeech;
 
     const sessionOptions: SessionOptions = {
-      messages: chatLog,
+      messages: Array.prototype.concat({ role: "system", content: systemPrompt }, chatLog),
       sttModelId: "your-stt-model-id",
       llmModelId: "your-llm-model-id",
       ttsModelId: "your-tts-model-id",
     };
 
-    speechToSpeech.start(isMicRecording, sessionOptions);
+    speechToSpeechRef.timer = setTimeout(() => {
+      speechToSpeech.start(isMicRecording, sessionOptions);
+    }, 500);
+    setIsReady(true);
 
     speechToSpeech.onUserSpeechStart(() => {
       console.log('User speech started');
@@ -107,10 +113,11 @@ export default function Home() {
     });
 
     return () => {
+      clearTimeout(speechToSpeechRef.timer);
       speechToSpeech.stop();
       speechToSpeechRef.current = null;
     };
-  }, [isMicRecording, chatLog, playAssistantSpeech]);
+  }, [isMicRecording, isReady, playAssistantSpeech]);
 
   const handleSendChat = useCallback(
     (text: string) => {
